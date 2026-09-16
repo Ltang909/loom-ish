@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Loom Alternative — Private Screen Recorder | Loom-ish</title>
+<meta name="description" content="A free, open-source Loom alternative that records your screen, webcam and microphone in the browser. No account or uploads. Download and save every recording locally.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<link rel="canonical" href="https://loomalt.leontang.ca/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://loomalt.leontang.ca/">
+<meta property="og:title" content="Free Loom Alternative — Private Browser Screen Recorder">
+<meta property="og:description" content="Record your screen, webcam and microphone for free. Nothing is uploaded or stored — download your video when you finish.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Free Loom Alternative — Private Browser Screen Recorder">
+<meta name="twitter:description" content="Free and open-source screen recording in your browser. No account, uploads or hosted video storage.">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://loomalt.leontang.ca/#app",
+      "name": "Loom-ish",
+      "url": "https://loomalt.leontang.ca/",
+      "image": "https://loomalt.leontang.ca/logo.png",
+      "codeRepository": "https://github.com/Ltang909/loom-ish",
+      "license": "https://github.com/Ltang909/loom-ish/blob/main/LICENSE",
+      "description": "A free, open-source Loom alternative for recording a screen, webcam and microphone directly in a web browser.",
+      "applicationCategory": "MultimediaApplication",
+      "applicationSubCategory": "Screen recorder",
+      "operatingSystem": "Windows, macOS, Linux, ChromeOS",
+      "browserRequirements": "A modern desktop browser with screen-capture support; Chrome or Edge recommended.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Screen and tab recording",
+        "Webcam bubble",
+        "Microphone recording",
+        "Local video download",
+        "Video trimming",
+        "Playback speed adjustment",
+        "No account required",
+        "No hosted video storage"
+      ],
+      "author": {
+        "@type": "Person",
+        "name": "Leon Tang",
+        "email": "mailto:leon@leontang.ca"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://loomalt.leontang.ca/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is this screen recorder really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Loom-ish is a free, open-source screen recorder. It does not require an account or a paid plan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where are my recordings stored?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "They are not stored by this website. Recording happens in your browser, and you must download and save the finished video to your own device."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this upload my screen recording?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Your screen, webcam and microphone streams are processed locally in your browser and are not uploaded to this website."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is this different from Loom?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Loom-ish is designed for private, local recording without an account or hosted video library. Loom is designed around cloud-hosted sharing, collaboration and team video management."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which browsers work best?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chrome and Edge provide the best experience, including the floating webcam bubble. Other modern desktop browsers may support recording with fewer controls."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+  :root{
+    --bg: #15171c;
+    --panel: #1c1f26;
+    --panel-raised: #23262f;
+    --border: #2c3039;
+    --text: #eceef2;
+    --muted: #8b8f9c;
+    --record: #ef4444;
+    --record-dim: #7f2323;
+    --accent: #e8a33d;
+    --accent-dim: #6b5326;
+    --focus: #7aa2ff;
+    --mono: "SFMono-Regular", "IBM Plex Mono", Consolas, Menlo, monospace;
+    --sans: -apple-system, "Segoe UI", "Inter", Helvetica, Arial, sans-serif;
+  }
+  :root:not([data-theme="light"]){ color-scheme: dark; }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg: #f3f2ef;
+      --panel: #ffffff;
+      --panel-raised: #fbfaf8;
+      --border: #ddd9d2;
+      --text: #1c1c1c;
+      --muted: #6b6b6b;
+      --accent-dim: #f3ddb1;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg: #f3f2ef;
+    --panel: #ffffff;
+    --panel-raised: #fbfaf8;
+    --border: #ddd9d2;
+    --text: #1c1c1c;
+    --muted: #6b6b6b;
+    --accent-dim: #f3ddb1;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .wrap{ width: 100%; max-width: 880px; }
+
+  header{ margin-bottom: 24px; }
+  header h1{
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.08;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    margin: 8px 0 10px;
+  }
+  header p{
+    color: var(--muted);
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 68ch;
+  }
+  .brand-lockup{
+    display:flex;
+    align-items:center;
+    gap: 18px;
+  }
+  .brand-lockup > div{ min-width: 0; }
+  .site-logo{
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    object-fit: contain;
+  }
+  .eyebrow{
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .trust-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .trust-list span,
+  .trust-list a{
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 999px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .trust-list a{ text-decoration: none; }
+  .trust-list a:hover{ border-color: var(--accent); }
+
+  .stage{
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    position: relative;
+    border: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .stage canvas{
+    width: 100%;
+    height: 100%;
+    display:block;
+  }
+  .stage .placeholder{
+    color: var(--muted);
+    font-size: 14px;
+    text-align:center;
+    padding: 20px;
+    max-width: 40ch;
+  }
+  .stage .recording-note{
+    display:none;
+    color: var(--text);
+    text-align:center;
+    padding: 20px;
+    max-width: 42ch;
+  }
+  .stage .recording-note.show{ display:block; }
+  .stage .recording-note .dot{
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--record);
+    display:inline-block;
+    margin-right: 8px;
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  .stage .recording-note .big-timer{
+    font-family: var(--mono);
+    font-size: 28px;
+    margin-top: 10px;
+  }
+  .stage .recording-note p{
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity: .25; }
+  }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 16px;
+    padding: 18px 20px;
+  }
+
+  .panel h2{
+    font-size: 14px;
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .storage-warning{
+    display:flex;
+    gap: 10px;
+    align-items:flex-start;
+    margin: 14px 0 0;
+    padding: 11px 12px;
+    border: 1px solid var(--accent-dim);
+    border-radius: 8px;
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .storage-warning strong{ color: var(--accent); }
+
+  .row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .row + .row{ margin-top: 14px; }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .field label{
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .segmented{
+    display:inline-flex;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .segmented button{
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 6px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .segmented button.active{
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .segmented button:focus-visible{ outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  .toggle{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select:none;
+  }
+  .toggle input{ accent-color: var(--accent); width: 15px; height:15px; }
+
+  .spacer{ flex: 1 1 auto; }
+
+  .btn{
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 10px 20px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .btn:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn:disabled{ opacity: .45; cursor: not-allowed; }
+  .btn-record{
+    background: var(--record);
+    color: #fff;
+  }
+  .btn-record:hover:not(:disabled){ background: #d93636; }
+  .btn-stop{
+    background: var(--text);
+    color: var(--bg);
+  }
+  .btn-ghost{
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover:not(:disabled){ border-color: var(--muted); }
+  .btn-accent{
+    background: var(--accent);
+    color: #241a03;
+  }
+
+  .status{
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 18px;
+  }
+  .status.error{ color: var(--record); }
+
+  .result{
+    margin-top: 16px;
+    display:none;
+  }
+  .result.show{ display:block; }
+  .result video{
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display:block;
+    background:#000;
+  }
+  .result-actions{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .download-link{
+    background: var(--accent);
+    color: #241a03;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .format-note{
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .trim-panel{
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .trim-sliders{
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .trim-slider-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .trim-slider-row label{
+    font-size: 12px;
+    color: var(--muted);
+    width: 42px;
+    flex-shrink:0;
+  }
+  .trim-slider-row input[type="range"]{
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .trim-slider-row .time{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text);
+    width: 46px;
+    text-align: right;
+    flex-shrink:0;
+  }
+  .subhead{
+    font-size: 13px;
+    font-weight: 600;
+    margin: 18px 0 8px;
+  }
+  .hint{
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: 6px;
+  }
+  .speed-box{
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .speed-box .segmented{
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+  .speed-box .segmented button{
+    font-size: 13.5px;
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+  }
+  .speed-box .segmented button.active{
+    background: var(--accent);
+    color: #241a03;
+    box-shadow: none;
+    border-color: var(--accent);
+  }
+  .progress-wrap{
+    display:none;
+    align-items:center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .progress-wrap.show{ display:flex; }
+  .progress-track{
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .progress-fill{
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width .12s linear;
+  }
+  .progress-text{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    width: 132px;
+    text-align: right;
+  }
+  .trim-result{
+    margin-top: 10px;
+    display:none;
+  }
+  .trim-result.show{ display:block; }
+
+  .seo-content{
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding-top: 34px;
+  }
+  .seo-content h2{
+    font-size: clamp(24px, 4vw, 32px);
+    line-height: 1.2;
+    letter-spacing: -.025em;
+    margin: 0 0 14px;
+  }
+  .seo-content h3{
+    font-size: 18px;
+    margin: 0 0 8px;
+  }
+  .seo-content p{
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .answer-box{
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    background: var(--panel);
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 28px;
+  }
+  .answer-box p{ color: var(--text); }
+  .comparison{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 22px 0 36px;
+    font-size: 14px;
+  }
+  .comparison th,
+  .comparison td{
+    border-bottom: 1px solid var(--border);
+    padding: 13px 10px;
+    text-align:left;
+    vertical-align:top;
+    line-height: 1.5;
+  }
+  .comparison th{ color: var(--text); }
+  .comparison td{ color: var(--muted); }
+  .comparison .this-tool{ color: var(--text); }
+  .faq-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .faq-grid article{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .faq-grid p{ font-size: 15px; }
+  .source-note{
+    font-size: 13px !important;
+    margin-top: -22px !important;
+  }
+  .seo-content a, footer a{ color: var(--accent); }
+
+  footer{
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  footer a{ color: inherit; }
+
+  @media (max-width: 640px){
+    body{ padding: 22px 14px 42px; }
+    .panel{ padding: 15px; }
+    .brand-lockup{ align-items:flex-start; gap: 12px; }
+    .site-logo{ width: 52px; height: 52px; }
+    .faq-grid{ grid-template-columns: 1fr; }
+    .comparison{ font-size: 13px; }
+    .comparison th, .comparison td{ padding: 11px 6px; }
+  }
+
+  ::selection{ background: var(--accent-dim); }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header>
+    <div class="brand-lockup">
+      <img class="site-logo" src="/logo-144.png" width="72" height="72" alt="">
+      <div>
+        <div class="eyebrow">Loom-ish · Free · open source · no sign-up</div>
+        <h1>A free Loom alternative that keeps recordings on your device</h1>
+      </div>
+    </div>
+    <p>Record your screen, webcam and microphone directly in your browser. Nothing is uploaded or stored here. When you finish, download the video and save it to your device.</p>
+    <div class="trust-list" aria-label="Product highlights">
+      <span>$0 forever</span>
+      <span>No account</span>
+      <span>No cloud storage</span>
+      <span>Built-in trimming</span>
+      <a href="https://github.com/Ltang909/loom-ish" rel="noopener">View source on GitHub</a>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div class="placeholder" id="placeholder">Press "Start recording" to choose a tab or screen to share.</div>
+    <div class="recording-note" id="recordingNote">
+      <div><span class="dot"></span>Recording</div>
+      <div class="big-timer" id="bigTimer">00:00</div>
+      <p>Your webcam bubble is floating on top of everything — switch tabs freely, it keeps capturing. Stop from the button under the bubble, or from here.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="field">
+        <label>Bubble corner (baked into recording)</label>
+        <div class="segmented" id="cornerPicker">
+          <button data-corner="bottom-right" class="active">Bottom right</button>
+          <button data-corner="bottom-left">Bottom left</button>
+          <button data-corner="top-right">Top right</button>
+          <button data-corner="top-left">Top left</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bubble shape</label>
+        <div class="segmented" id="shapePicker">
+          <button data-shape="circle" class="active">Circle</button>
+          <button data-shape="rounded">Rounded</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <label class="toggle"><input type="checkbox" id="camToggle" checked> Webcam bubble</label>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <label class="toggle"><input type="checkbox" id="micToggle" checked> Microphone</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Max resolution <span class="hint">lower = less CPU/RAM</span></label>
+        <div class="segmented" id="resPicker">
+          <button data-res="1280" class="active">720p</button>
+          <button data-res="1920">1080p</button>
+          <button data-res="0">Original</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Frame rate</label>
+        <div class="segmented" id="fpsPicker">
+          <button data-fps="10">10</button>
+          <button data-fps="15" class="active">15</button>
+          <button data-fps="24">24</button>
+          <button data-fps="30">30</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Quality</label>
+        <div class="segmented" id="qualityPicker">
+          <button data-bitrate="1500000">Low</button>
+          <button data-bitrate="3000000" class="active">Medium</button>
+          <button data-bitrate="6000000">High</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <label class="toggle"><input type="checkbox" id="selfViewToggle" checked> Floating self-view</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-record" id="startBtn">● Start recording</button>
+      <button class="btn btn-stop" id="stopBtn" disabled>■ Stop</button>
+      <button class="btn btn-ghost" id="pipBtn" disabled>⧉ Reopen floating bubble</button>
+      <button class="btn btn-ghost" id="resetBtn" style="display:none;">Record another</button>
+      <div class="spacer"></div>
+      <span class="status" id="status">Ready.</span>
+    </div>
+    <div class="storage-warning" role="note">
+      <span aria-hidden="true">↓</span>
+      <span><strong>Download required:</strong> this website does not save or host your recordings. Download the finished file before closing or refreshing this page.</span>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <video id="playback" controls></video>
+    <div class="result-actions">
+      <a class="download-link" id="downloadLink" download="recording.mp4">Download recording</a>
+      <span class="format-note" id="formatNote"></span>
+    </div>
+
+    <div class="trim-panel">
+      <h2>Edit your recording</h2>
+
+      <div class="subhead">Trim</div>
+      <div class="trim-sliders">
+        <div class="trim-slider-row">
+          <label>Start</label>
+          <input type="range" id="trimStart" min="0" max="0" step="0.1" value="0">
+          <span class="time" id="trimStartTime">00:00</span>
+        </div>
+        <div class="trim-slider-row">
+          <label>End</label>
+          <input type="range" id="trimEnd" min="0" max="0" step="0.1" value="0">
+          <span class="time" id="trimEndTime">00:00</span>
+        </div>
+      </div>
+
+      <div class="subhead">Speed<span class="hint">how fast the exported clip plays back</span></div>
+      <div class="speed-box">
+        <div class="segmented" id="speedPicker">
+          <button data-speed="0.5">0.5x</button>
+          <button data-speed="0.75">0.75x</button>
+          <button data-speed="1" class="active">1x</button>
+          <button data-speed="1.25">1.25x</button>
+          <button data-speed="1.5">1.5x</button>
+          <button data-speed="2">2x</button>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-accent" id="trimBtn">Save edited clip</button>
+        <span class="status" id="trimStatus"></span>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-text" id="progressText">0% • --:-- left</span>
+      </div>
+      <div class="trim-result" id="trimResult">
+        <video id="trimPlayback" controls></video>
+        <div class="result-actions">
+          <a class="download-link" id="trimDownloadLink" download="recording-edited.mp4">Download edited clip</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="seo-content">
+    <section aria-labelledby="why-heading">
+      <h2 id="why-heading">What makes this a free Loom alternative?</h2>
+      <div class="answer-box">
+        <p>Loom-ish is a free, open-source browser screen recorder for people who want screen, microphone and webcam capture without creating an account or uploading video to a hosted library. Your recording is created locally, then you download and save the file yourself.</p>
+      </div>
+
+      <table class="comparison">
+        <thead>
+          <tr><th scope="col">Feature</th><th scope="col">Loom-ish</th><th scope="col">Loom Starter</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Price</th><td class="this-tool">Free</td><td>Free plan available</td></tr>
+          <tr><th scope="row">Account</th><td class="this-tool">Not required</td><td>Required</td></tr>
+          <tr><th scope="row">Video storage</th><td class="this-tool">None — download locally</td><td>Cloud video library</td></tr>
+          <tr><th scope="row">Recording limits</th><td class="this-tool">No product-set time or video-count limit*</td><td>5 minutes per recording; 25 stored videos</td></tr>
+          <tr><th scope="row">Screen + webcam</th><td class="this-tool">Included</td><td>Included</td></tr>
+          <tr><th scope="row">Sharing</th><td class="this-tool">Share the downloaded file yourself</td><td>Hosted share links and collaboration</td></tr>
+        </tbody>
+      </table>
+      <p class="source-note">*Practical recording length depends on your browser and device resources. Loom Starter details checked September 2026 against <a href="https://www.loom.com/pricing" rel="nofollow noopener">Loom's official pricing page</a>.</p>
+    </section>
+
+    <section aria-labelledby="faq-heading" style="margin-top:42px;">
+      <h2 id="faq-heading">Free Loom alternative FAQ</h2>
+      <div class="faq-grid">
+        <article>
+          <h3>Is this screen recorder really free?</h3>
+          <p>Yes. Loom-ish is a free, open-source screen recorder. It does not require an account or a paid plan.</p>
+        </article>
+        <article>
+          <h3>Where are my recordings stored?</h3>
+          <p>They are not stored by this website. Recording happens in your browser, and you must download and save the finished video to your own device.</p>
+        </article>
+        <article>
+          <h3>Does this upload my screen recording?</h3>
+          <p>No. Your screen, webcam and microphone streams are processed locally in your browser and are not uploaded to this website.</p>
+        </article>
+        <article>
+          <h3>How is this different from Loom?</h3>
+          <p>Loom-ish is designed for private, local recording without an account or hosted video library. Loom is designed around cloud-hosted sharing, collaboration and team video management.</p>
+        </article>
+        <article>
+          <h3>Which browsers work best?</h3>
+          <p>Chrome and Edge provide the best experience, including the floating webcam bubble. Other modern desktop browsers may support recording with fewer controls.</p>
+        </article>
+        <article>
+          <h3>How do I get support?</h3>
+          <p>Email <a href="mailto:leon@leontang.ca">leon@leontang.ca</a> for support inquiries.</p>
+        </article>
+      </div>
+    </section>
+  </section>
+
+  <footer>
+    <p>Uses your browser's screen-share and camera permissions directly — this page never sends video anywhere. The floating bubble uses the Document Picture-in-Picture API (Chrome/Edge); other browsers fall back to a plain floating video without the built-in stop button. Trimming and speed changes re-encode the selected range, so boundaries can land roughly a quarter of a second off from the slider. Lower resolution, frame rate, or quality — or turning off the floating self-view — all reduce CPU and memory use while recording; the defaults above are already set to a light-power preset.</p>
+    <p><a href="https://github.com/Ltang909/loom-ish" rel="noopener">Source code</a> · Support: <a href="mailto:leon@leontang.ca">leon@leontang.ca</a> · Loom-ish is an independent open-source project and is not affiliated with Loom or Atlassian.</p>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const placeholder = document.getElementById('placeholder');
+  const recordingNote = document.getElementById('recordingNote');
+  const bigTimer = document.getElementById('bigTimer');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const pipBtn = document.getElementById('pipBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const statusEl = document.getElementById('status');
+  const camToggle = document.getElementById('camToggle');
+  const micToggle = document.getElementById('micToggle');
+  const resPicker = document.getElementById('resPicker');
+  const fpsPicker = document.getElementById('fpsPicker');
+  const qualityPicker = document.getElementById('qualityPicker');
+  const selfViewToggle = document.getElementById('selfViewToggle');
+  const cornerPicker = document.getElementById('cornerPicker');
+  const shapePicker = document.getElementById('shapePicker');
+  const result = document.getElementById('result');
+  const playback = document.getElementById('playback');
+  const downloadLink = document.getElementById('downloadLink');
+  const formatNote = document.getElementById('formatNote');
+
+  const trimStart = document.getElementById('trimStart');
+  const trimEnd = document.getElementById('trimEnd');
+  const trimStartTime = document.getElementById('trimStartTime');
+  const trimEndTime = document.getElementById('trimEndTime');
+  const speedPicker = document.getElementById('speedPicker');
+  const trimBtn = document.getElementById('trimBtn');
+  const trimStatus = document.getElementById('trimStatus');
+  const trimResult = document.getElementById('trimResult');
+  const trimPlayback = document.getElementById('trimPlayback');
+  const trimDownloadLink = document.getElementById('trimDownloadLink');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+
+  let corner = 'bottom-right';
+  let shape = 'circle';
+  let speed = 1;
+  let maxDim = 1280;
+  let targetFps = 15;
+  let bitrate = 3_000_000;
+  let screenStream = null;
+  let camStream = null;
+  let audioCtx = null;
+  let recorder = null;
+  let chunks = [];
+  let screenVideo = null;
+  let camVideo = null;
+  let timerInterval = null;
+  let startTime = 0;
+  let recordedMime = '';
+  let recordedBlob = null;
+  let tickWorker = null;
+  let pipWin = null;
+  let pipTimerEl = null;
+
+  // --- background-safe tick loop -------------------------------------
+  // requestAnimationFrame is fully paused in hidden tabs, which is why
+  // switching tabs used to freeze the screen + webcam capture. A Worker's
+  // own timer keeps firing even when this page isn't visible, so we drive
+  // the canvas draw loop from that instead.
+  function makeTickWorker(intervalMs){
+    const code = "let id=null; self.onmessage=function(e){ if(e.data==='start'){ id=setInterval(function(){ self.postMessage('tick'); }, " + intervalMs + "); } else if(e.data==='stop'){ clearInterval(id); id=null; } };";
+    const blob = new Blob([code], { type: 'application/javascript' });
+    return new Worker(URL.createObjectURL(blob));
+  }
+
+  cornerPicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    corner = b.dataset.corner;
+    [...cornerPicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+  shapePicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    shape = b.dataset.shape;
+    [...shapePicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+  speedPicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    speed = parseFloat(b.dataset.speed);
+    [...speedPicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+  resPicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    maxDim = parseInt(b.dataset.res, 10);
+    [...resPicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+  fpsPicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    targetFps = parseInt(b.dataset.fps, 10);
+    [...fpsPicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+  qualityPicker.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    bitrate = parseInt(b.dataset.bitrate, 10);
+    [...qualityPicker.children].forEach(x => x.classList.toggle('active', x === b));
+  });
+
+  function setStatus(msg, isError){
+    statusEl.textContent = msg;
+    statusEl.classList.toggle('error', !!isError);
+  }
+
+  function pickMimeType(){
+    const candidates = [
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4;codecs=h264,aac',
+      'video/mp4',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm'
+    ];
+    for(const c of candidates){
+      if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return '';
+  }
+
+  function roundRectPath(c, x, y, w, h, r){
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+  }
+
+  function scaledSize(w, h, cap){
+    if(!cap || Math.max(w, h) <= cap) return { w, h };
+    const scale = cap / Math.max(w, h);
+    return { w: Math.round(w * scale / 2) * 2, h: Math.round(h * scale / 2) * 2 };
+  }
+
+  function drawFrame(){
+    if(screenVideo && screenVideo.videoWidth){
+      const target = scaledSize(screenVideo.videoWidth, screenVideo.videoHeight, maxDim);
+      if(canvas.width !== target.w || canvas.height !== target.h){
+        canvas.width = target.w;
+        canvas.height = target.h;
+      }
+      ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+    }
+
+    if(camToggle.checked && camVideo && camVideo.videoWidth){
+      const minSide = Math.min(canvas.width, canvas.height);
+      const bubbleSize = Math.max(140, Math.round(minSide * 0.22));
+      const margin = Math.round(minSide * 0.03);
+      let x, y;
+      if(corner.includes('right')) x = canvas.width - bubbleSize - margin; else x = margin;
+      if(corner.includes('bottom')) y = canvas.height - bubbleSize - margin; else y = margin;
+
+      const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+      const side = Math.min(vw, vh);
+      const sx = (vw - side) / 2, sy = (vh - side) / 2;
+
+      ctx.save();
+      ctx.beginPath();
+      const r = shape === 'circle' ? bubbleSize / 2 : bubbleSize * 0.14;
+      if(shape === 'circle'){
+        ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2, 0, Math.PI*2);
+      } else {
+        roundRectPath(ctx, x, y, bubbleSize, bubbleSize, r);
+      }
+      ctx.closePath();
+      ctx.clip();
+      ctx.translate(x + bubbleSize, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(camVideo, sx, sy, side, side, 0, 0, bubbleSize, bubbleSize);
+      ctx.restore();
+
+      ctx.save();
+      ctx.lineWidth = Math.max(2, bubbleSize * 0.02);
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath();
+      if(shape === 'circle'){
+        ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2 - ctx.lineWidth/2, 0, Math.PI*2);
+      } else {
+        roundRectPath(ctx, x + ctx.lineWidth/2, y + ctx.lineWidth/2, bubbleSize - ctx.lineWidth, bubbleSize - ctx.lineWidth, r);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function fmtTime(ms){
+    const s = Math.floor(ms / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return mm + ':' + ss;
+  }
+
+  function stopAllTracks(){
+    [screenStream, camStream].forEach(s => {
+      if(s) s.getTracks().forEach(t => t.stop());
+    });
+  }
+
+  // --- floating self-view bubble (Document Picture-in-Picture) -------
+  // Document PiP opens a real, always-on-top window we fully control,
+  // which is what lets us put a Stop button right under the camera
+  // preview. If the browser doesn't support it, we fall back to a
+  // plain video Picture-in-Picture window (no custom stop button).
+  async function openBubbleWindow(){
+    if(pipWin && !pipWin.closed){
+      pipWin.focus();
+      return;
+    }
+    if(!camStream || !camStream.getVideoTracks().length) return;
+
+    if(window.documentPictureInPicture){
+      try{
+        pipWin = await documentPictureInPicture.requestWindow({ width: 220, height: 300 });
+        const style = pipWin.document.createElement('style');
+        style.textContent = [
+          'html,body{margin:0;padding:0;background:#15171c;color:#eceef2;',
+          'font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;',
+          'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;}',
+          '.bubble{width:170px;height:170px;border-radius:50%;overflow:hidden;',
+          'border:2px solid rgba(255,255,255,0.85);background:#000;}',
+          '.bubble video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}',
+          '.pip-timer{font-family:SFMono-Regular,Consolas,Menlo,monospace;font-size:13px;color:#8b8f9c;}',
+          '.pip-stop{background:#ef4444;color:#fff;border:none;border-radius:8px;',
+          'font-weight:600;font-size:13px;padding:9px 16px;cursor:pointer;font-family:inherit;}',
+          '.pip-stop:hover{background:#d93636;}'
+        ].join('');
+        pipWin.document.head.appendChild(style);
+
+        const bubble = pipWin.document.createElement('div');
+        bubble.className = 'bubble';
+        const vid = pipWin.document.createElement('video');
+        vid.autoplay = true; vid.muted = true; vid.playsInline = true;
+        vid.srcObject = camStream;
+        bubble.appendChild(vid);
+
+        pipTimerEl = pipWin.document.createElement('div');
+        pipTimerEl.className = 'pip-timer';
+        pipTimerEl.textContent = '00:00';
+
+        const stopButton = pipWin.document.createElement('button');
+        stopButton.className = 'pip-stop';
+        stopButton.textContent = '■ Stop recording';
+        stopButton.addEventListener('click', () => stop());
+
+        pipWin.document.body.appendChild(bubble);
+        pipWin.document.body.appendChild(pipTimerEl);
+        pipWin.document.body.appendChild(stopButton);
+
+        pipWin.addEventListener('pagehide', () => { pipWin = null; pipTimerEl = null; });
+        pipBtn.disabled = false;
+        return;
+      } catch(err){
+        console.warn('Document Picture-in-Picture failed, falling back:', err);
+      }
+    }
+
+    // fallback: plain video PiP, no custom stop button
+    if(document.pictureInPictureEnabled && camVideo && camVideo.requestPictureInPicture){
+      try{
+        await camVideo.requestPictureInPicture();
+        pipBtn.disabled = false;
+        setStatus('Floating bubble open — this browser doesn\'t support a built-in stop button on it, so stop from here when you\'re done.');
+      } catch(err){
+        console.warn('Video Picture-in-Picture also failed:', err);
+      }
+    }
+  }
+
+  function closeBubbleWindow(){
+    if(pipWin){
+      try{ pipWin.close(); } catch(e){}
+      pipWin = null;
+      pipTimerEl = null;
+    }
+    if(document.pictureInPictureElement){
+      document.exitPictureInPicture().catch(()=>{});
+    }
+  }
+
+  async function start(){
+    chunks = [];
+    setStatus('Requesting screen share…');
+    try{
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: targetFps, max: 30 } },
+        audio: true
+      });
+    } catch(err){
+      console.error('getDisplayMedia failed:', err);
+      const name = err && err.name ? err.name : 'UnknownError';
+      let hint = '';
+      if(name === 'NotAllowedError'){
+        hint = ' (either you clicked cancel, or this page is embedded somewhere that blocks screen capture — try opening it in its own browser tab, or host it yourself)';
+      } else if(name === 'NotFoundError'){
+        hint = ' (no screen/window source was available to capture)';
+      } else if(name === 'NotReadableError'){
+        hint = ' (another app may already be using screen capture)';
+      }
+      setStatus('Screen share failed: ' + name + hint, true);
+      return;
+    }
+
+    if(camToggle.checked || micToggle.checked){
+      setStatus('Requesting camera / microphone…');
+      try{
+        camStream = await navigator.mediaDevices.getUserMedia({
+          video: camToggle.checked ? { width: 480, height: 480 } : false,
+          audio: micToggle.checked
+        });
+      } catch(err){
+        setStatus('Camera/mic permission denied — continuing without them.', true);
+        camStream = null;
+      }
+    }
+
+    screenVideo = document.createElement('video');
+    screenVideo.srcObject = screenStream;
+    screenVideo.muted = true;
+    screenVideo.playsInline = true;
+    await screenVideo.play();
+
+    if(camStream && camStream.getVideoTracks().length){
+      camVideo = document.createElement('video');
+      camVideo.srcObject = camStream;
+      camVideo.muted = true;
+      camVideo.playsInline = true;
+      await camVideo.play();
+    } else {
+      camVideo = null;
+    }
+
+    { const initial = scaledSize(screenVideo.videoWidth || 1280, screenVideo.videoHeight || 720, maxDim);
+      canvas.width = initial.w;
+      canvas.height = initial.h; }
+    canvas.style.display = 'none'; // the live composite is only needed for capture, not for on-page viewing
+    placeholder.style.display = 'none';
+    recordingNote.classList.add('show');
+
+    tickWorker = makeTickWorker(Math.round(1000/targetFps));
+    tickWorker.onmessage = drawFrame;
+    tickWorker.postMessage('start');
+
+    const canvasStream = canvas.captureStream(targetFps);
+    const finalTracks = [...canvasStream.getVideoTracks()];
+
+    const audioSources = [];
+    if(screenStream.getAudioTracks().length) audioSources.push(new MediaStream([screenStream.getAudioTracks()[0]]));
+    if(camStream && camStream.getAudioTracks().length) audioSources.push(new MediaStream([camStream.getAudioTracks()[0]]));
+
+    if(audioSources.length){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = audioCtx.createMediaStreamDestination();
+      audioSources.forEach(ms => {
+        const src = audioCtx.createMediaStreamSource(ms);
+        src.connect(dest);
+      });
+      finalTracks.push(...dest.stream.getAudioTracks());
+    }
+
+    const finalStream = new MediaStream(finalTracks);
+
+    recordedMime = pickMimeType();
+    if(!recordedMime){
+      setStatus('This browser cannot record video. Try Chrome or Edge.', true);
+      stopAllTracks();
+      if(tickWorker){ tickWorker.postMessage('stop'); tickWorker.terminate(); }
+      return;
+    }
+
+    recorder = new MediaRecorder(finalStream, {
+      mimeType: recordedMime,
+      videoBitsPerSecond: bitrate
+    });
+    recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstop = onRecorderStop;
+    recorder.start(250);
+
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      const t = fmtTime(Date.now() - startTime);
+      bigTimer.textContent = t;
+      if(pipTimerEl) pipTimerEl.textContent = t;
+    }, 250);
+
+    screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+      if(recorder && recorder.state !== 'inactive') stop();
+    });
+
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    camToggle.disabled = true;
+    micToggle.disabled = true;
+    resPicker.querySelectorAll('button').forEach(b => b.disabled = true);
+    fpsPicker.querySelectorAll('button').forEach(b => b.disabled = true);
+    qualityPicker.querySelectorAll('button').forEach(b => b.disabled = true);
+    setStatus('Recording — you can switch tabs now, it will keep capturing.');
+
+    // the floating bubble shows up by default (unless turned off), no extra click needed
+    if(selfViewToggle.checked){
+      await openBubbleWindow();
+    } else {
+      pipBtn.disabled = !camVideo;
+    }
+  }
+
+  function stop(){
+    if(tickWorker){ tickWorker.postMessage('stop'); tickWorker.terminate(); tickWorker = null; }
+    if(recorder && recorder.state !== 'inactive') recorder.stop();
+    if(timerInterval) clearInterval(timerInterval);
+    stopAllTracks();
+    if(audioCtx) audioCtx.close();
+    closeBubbleWindow();
+    stopBtn.disabled = true;
+    pipBtn.disabled = true;
+  }
+
+  function getBlobDuration(videoEl){
+    return new Promise(resolve => {
+      function onMeta(){
+        if(videoEl.duration === Infinity || isNaN(videoEl.duration)){
+          videoEl.currentTime = 1e101;
+          videoEl.addEventListener('timeupdate', function onTU(){
+            videoEl.removeEventListener('timeupdate', onTU);
+            const d = videoEl.duration === Infinity || isNaN(videoEl.duration) ? 0 : videoEl.duration;
+            videoEl.currentTime = 0;
+            resolve(d);
+          });
+        } else {
+          resolve(videoEl.duration);
+        }
+      }
+      if(videoEl.readyState >= 1) onMeta();
+      else videoEl.addEventListener('loadedmetadata', onMeta, { once: true });
+    });
+  }
+
+  async function onRecorderStop(){
+    recordedBlob = new Blob(chunks, { type: recordedMime.split(';')[0] });
+    const url = URL.createObjectURL(recordedBlob);
+    const isMp4 = recordedMime.includes('mp4');
+    const ext = isMp4 ? 'mp4' : 'webm';
+
+    playback.src = url;
+    downloadLink.href = url;
+    downloadLink.download = 'recording.' + ext;
+    downloadLink.textContent = 'Download recording.' + ext;
+    formatNote.textContent = isMp4
+      ? 'Saved as native MP4 (H.264).'
+      : 'Your browser recorded WebM (MP4 capture isn\'t supported here yet). WebM plays in any modern browser and video editor.';
+    result.classList.add('show');
+
+    setStatus('Done — ' + fmtTime(Date.now() - startTime) + ' recorded. Download and save it below; this site does not keep a copy.');
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'none';
+    pipBtn.style.display = 'none';
+    resetBtn.style.display = 'inline-flex';
+    recordingNote.classList.remove('show');
+
+    const duration = await getBlobDuration(playback);
+    trimStart.min = 0; trimStart.max = duration; trimStart.step = 0.1; trimStart.value = 0;
+    trimEnd.min = 0; trimEnd.max = duration; trimEnd.step = 0.1; trimEnd.value = duration;
+    trimStartTime.textContent = fmtTime(0);
+    trimEndTime.textContent = fmtTime(duration * 1000);
+  }
+
+  trimStart.addEventListener('input', () => {
+    if(parseFloat(trimStart.value) >= parseFloat(trimEnd.value)){
+      trimStart.value = Math.max(0, parseFloat(trimEnd.value) - 0.1);
+    }
+    trimStartTime.textContent = fmtTime(parseFloat(trimStart.value) * 1000);
+  });
+  trimEnd.addEventListener('input', () => {
+    if(parseFloat(trimEnd.value) <= parseFloat(trimStart.value)){
+      trimEnd.value = Math.min(parseFloat(trimEnd.max), parseFloat(trimStart.value) + 0.1);
+    }
+    trimEndTime.textContent = fmtTime(parseFloat(trimEnd.value) * 1000);
+  });
+
+  trimBtn.addEventListener('click', async () => {
+    if(!recordedBlob) return;
+    const start = parseFloat(trimStart.value);
+    const end = parseFloat(trimEnd.value);
+    if(end - start < 0.2){
+      trimStatus.textContent = 'Selection is too short.';
+      trimStatus.classList.add('error');
+      return;
+    }
+    trimBtn.disabled = true;
+    trimStatus.classList.remove('error');
+    trimStatus.textContent = '';
+    progressWrap.classList.add('show');
+    progressFill.style.width = '0%';
+    progressText.textContent = '0% • estimating…';
+
+    const srcVideo = document.createElement('video');
+    srcVideo.src = URL.createObjectURL(recordedBlob);
+    srcVideo.muted = true;
+    srcVideo.playsInline = true;
+    await new Promise(res => srcVideo.addEventListener('loadedmetadata', res, { once: true }));
+
+    await new Promise(res => {
+      srcVideo.currentTime = start;
+      srcVideo.addEventListener('seeked', res, { once: true });
+    });
+
+    srcVideo.playbackRate = speed;
+
+    const captureFn = srcVideo.captureStream ? srcVideo.captureStream.bind(srcVideo) : srcVideo.mozCaptureStream.bind(srcVideo);
+    const clipStream = captureFn();
+    const clipMime = pickMimeType();
+    const clipRecorder = new MediaRecorder(clipStream, { mimeType: clipMime, videoBitsPerSecond: bitrate });
+    const clipChunks = [];
+    clipRecorder.ondataavailable = e => { if(e.data && e.data.size) clipChunks.push(e.data); };
+
+    clipRecorder.onstop = () => {
+      const clipBlob = new Blob(clipChunks, { type: clipMime.split(';')[0] });
+      const clipUrl = URL.createObjectURL(clipBlob);
+      const ext = clipMime.includes('mp4') ? 'mp4' : 'webm';
+      trimPlayback.src = clipUrl;
+      trimDownloadLink.href = clipUrl;
+      trimDownloadLink.download = 'recording-edited.' + ext;
+      trimDownloadLink.textContent = 'Download edited clip.' + ext;
+      trimResult.classList.add('show');
+      progressWrap.classList.remove('show');
+      trimStatus.textContent = 'Edited clip ready.';
+      trimBtn.disabled = false;
+      srcVideo.pause();
+      srcVideo.src = '';
+    };
+
+    clipRecorder.start(200);
+    srcVideo.play();
+
+    const renderStartedAt = Date.now();
+    srcVideo.addEventListener('timeupdate', function onTU(){
+      const span = end - start;
+      const done = Math.min(1, Math.max(0, (srcVideo.currentTime - start) / span));
+      progressFill.style.width = (done * 100).toFixed(0) + '%';
+
+      // estimate remaining wall-clock time from how fast we've actually progressed so far,
+      // which stays accurate even if the browser can't sustain full realtime playback
+      const elapsedMs = Date.now() - renderStartedAt;
+      const estTotalMs = done > 0.02 ? elapsedMs / done : (span / speed) * 1000;
+      const remainingMs = Math.max(0, estTotalMs - elapsedMs);
+      const remainingS = Math.ceil(remainingMs / 1000);
+      const mm = String(Math.floor(remainingS / 60)).padStart(2, '0');
+      const ss = String(remainingS % 60).padStart(2, '0');
+      progressText.textContent = (done * 100).toFixed(0) + '% • ' + mm + ':' + ss + ' left';
+
+      if(srcVideo.currentTime >= end){
+        srcVideo.removeEventListener('timeupdate', onTU);
+        progressFill.style.width = '100%';
+        progressText.textContent = '100% • done';
+        if(clipRecorder.state !== 'inactive') clipRecorder.stop();
+      }
+    });
+  });
+
+  pipBtn.addEventListener('click', () => openBubbleWindow());
+
+  function resetForAnother(){
+    result.classList.remove('show');
+    trimResult.classList.remove('show');
+    progressWrap.classList.remove('show');
+    trimStatus.textContent = '';
+    canvas.style.display = 'none';
+    placeholder.style.display = 'block';
+    recordingNote.classList.remove('show');
+    bigTimer.textContent = '00:00';
+    startBtn.style.display = 'inline-flex';
+    stopBtn.style.display = 'inline-flex';
+    pipBtn.style.display = 'inline-flex';
+    resetBtn.style.display = 'none';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    pipBtn.disabled = true;
+    camToggle.disabled = false;
+    micToggle.disabled = false;
+    resPicker.querySelectorAll('button').forEach(b => b.disabled = false);
+    fpsPicker.querySelectorAll('button').forEach(b => b.disabled = false);
+    qualityPicker.querySelectorAll('button').forEach(b => b.disabled = false);
+    if(playback.src) URL.revokeObjectURL(playback.src);
+    if(trimPlayback.src) URL.revokeObjectURL(trimPlayback.src);
+    recordedBlob = null;
+    speed = 1;
+    speedPicker.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.speed === '1'));
+    setStatus('Ready.');
+  }
+
+  startBtn.addEventListener('click', () => start().catch(err => {
+    console.error(err);
+    setStatus('Something went wrong starting the recording.', true);
+  }));
+  stopBtn.addEventListener('click', stop);
+  resetBtn.addEventListener('click', resetForAnother);
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
+    setStatus('Your browser doesn\'t support screen recording (try Chrome, Edge, or Firefox on desktop).', true);
+    startBtn.disabled = true;
+  }
+})();
+</script>
+</body>
+</html>

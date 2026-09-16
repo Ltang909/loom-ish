@@ -1,0 +1,25 @@
+# Loom-ish
+
+> Loom-ish is a free, open-source Loom alternative that records a screen, webcam and microphone locally in a desktop web browser.
+
+## Key facts
+
+- Website: https://loomalt.leontang.ca/
+- Source code: https://github.com/Ltang909/loom-ish
+- License: MIT
+- Price: Free
+- Account required: No
+- Video uploads: No
+- Hosted video storage: No
+- Saving recordings: Users must download and save the finished video to their own device
+- Core features: Screen recording, webcam bubble, microphone capture, local download, trimming and playback-speed editing
+- Recommended browsers: Chrome and Edge on desktop
+- Support: leon@leontang.ca
+
+## Privacy model
+
+Recording is processed in the user's browser. Loom-ish does not upload, host or retain the recorded video. Closing or refreshing the page before downloading may lose the recording.
+
+## Relationship to Loom
+
+Loom-ish is an independent open-source project and is not affiliated with Loom or Atlassian. It is intended for people who prefer local files over a hosted video library and share links.
