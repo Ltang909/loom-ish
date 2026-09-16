@@ -210,36 +210,61 @@
   .trust-list a:hover{ border-color: var(--accent); }
 
   .stage{
-    background: #000;
+    background: var(--panel);
     border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 16/9;
     position: relative;
     border: 1px solid var(--border);
     display:flex;
     align-items:center;
-    justify-content:center;
+    justify-content:flex-start;
+    min-height: 76px;
+    padding: 14px 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.08);
   }
+  .stage.complete{ display:none; }
   .stage canvas{
-    width: 100%;
-    height: 100%;
-    display:block;
+    display:none;
   }
   .stage .placeholder{
+    display:flex;
+    align-items:center;
+    gap: 12px;
     color: var(--muted);
     font-size: 14px;
-    text-align:center;
-    padding: 20px;
-    max-width: 40ch;
+    line-height: 1.4;
+  }
+  .stage .placeholder strong{
+    display:block;
+    color: var(--text);
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .ready-mark{
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display:grid;
+    place-items:center;
+    flex: 0 0 auto;
+    color: var(--record);
+    background: color-mix(in srgb, var(--record) 12%, transparent);
+    font-size: 12px;
   }
   .stage .recording-note{
     display:none;
+    width:100%;
+    align-items:center;
+    gap: 14px;
     color: var(--text);
-    text-align:center;
-    padding: 20px;
-    max-width: 42ch;
+    min-width:0;
   }
-  .stage .recording-note.show{ display:block; }
+  .stage .recording-note.show{ display:flex; }
+  .recording-state{
+    display:flex;
+    align-items:center;
+    white-space:nowrap;
+    font-weight:600;
+  }
   .stage .recording-note .dot{
     width: 10px; height: 10px; border-radius: 50%;
     background: var(--record);
@@ -249,13 +274,20 @@
   }
   .stage .recording-note .big-timer{
     font-family: var(--mono);
-    font-size: 28px;
-    margin-top: 10px;
+    font-size: 20px;
+    font-weight:700;
+    white-space:nowrap;
   }
   .stage .recording-note p{
     color: var(--muted);
     font-size: 13px;
-    margin-top: 10px;
+    line-height:1.4;
+    margin:0 0 0 auto;
+    text-align:right;
+  }
+  @media (max-width: 640px){
+    .stage .recording-note{ flex-wrap:wrap; }
+    .stage .recording-note p{ width:100%; margin:0; text-align:left; }
   }
   @keyframes pulse{
     0%,100%{ opacity:1; }
@@ -631,41 +663,21 @@
 
   <div class="stage" id="stage">
     <canvas id="canvas" style="display:none;"></canvas>
-    <div class="placeholder" id="placeholder">Press "Start recording" to choose a tab or screen to share.</div>
+    <div class="placeholder" id="placeholder">
+      <span class="ready-mark" aria-hidden="true">●</span>
+      <span><strong>Ready to record</strong>Choose a tab, window or screen after you start.</span>
+    </div>
     <div class="recording-note" id="recordingNote">
-      <div><span class="dot"></span>Recording</div>
+      <div class="recording-state"><span class="dot"></span>Recording</div>
       <div class="big-timer" id="bigTimer">00:00</div>
-      <p>Your webcam bubble is floating on top of everything — switch tabs freely, it keeps capturing. Stop from the button under the bubble, or from here.</p>
+      <p>Your webcam bubble stays on top. Stop from its button or from the controls below.</p>
     </div>
   </div>
 
   <div class="panel">
     <div class="row">
-      <div class="field">
-        <label>Bubble corner (baked into recording)</label>
-        <div class="segmented" id="cornerPicker">
-          <button data-corner="bottom-right" class="active">Bottom right</button>
-          <button data-corner="bottom-left">Bottom left</button>
-          <button data-corner="top-right">Top right</button>
-          <button data-corner="top-left">Top left</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Bubble shape</label>
-        <div class="segmented" id="shapePicker">
-          <button data-shape="circle" class="active">Circle</button>
-          <button data-shape="rounded">Rounded</button>
-        </div>
-      </div>
-      <div class="spacer"></div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <label class="toggle"><input type="checkbox" id="camToggle" checked> Webcam bubble</label>
-      </div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <label class="toggle"><input type="checkbox" id="micToggle" checked> Microphone</label>
-      </div>
+      <label class="toggle"><input type="checkbox" id="camToggle" checked> Floating webcam bubble</label>
+      <label class="toggle"><input type="checkbox" id="micToggle" checked> Microphone</label>
     </div>
 
     <div class="row">
@@ -693,11 +705,6 @@
           <button data-bitrate="3000000" class="active">Medium</button>
           <button data-bitrate="6000000">High</button>
         </div>
-      </div>
-      <div class="spacer"></div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <label class="toggle"><input type="checkbox" id="selfViewToggle" checked> Floating self-view</label>
       </div>
     </div>
 
@@ -823,7 +830,7 @@
   </section>
 
   <footer>
-    <p>Uses your browser's screen-share and camera permissions directly — this page never sends video anywhere. The floating bubble uses the Document Picture-in-Picture API (Chrome/Edge); other browsers fall back to a plain floating video without the built-in stop button. Trimming and speed changes re-encode the selected range, so boundaries can land roughly a quarter of a second off from the slider. Lower resolution, frame rate, or quality — or turning off the floating self-view — all reduce CPU and memory use while recording; the defaults above are already set to a light-power preset.</p>
+    <p>Uses your browser's screen-share and camera permissions directly — this page never sends video anywhere. The floating bubble uses the Document Picture-in-Picture API (Chrome/Edge); other browsers fall back to a plain floating video without the built-in stop button. To prevent duplicate webcam images, full-screen captures use the floating bubble only, while tab and window captures add one circular webcam bubble to the saved video. Trimming and speed changes re-encode the selected range, so boundaries can land roughly a quarter of a second off from the slider. Lower resolution, frame rate, or quality reduces CPU and memory use while recording; the defaults above are already set to a light-power preset.</p>
     <p><a href="https://github.com/Ltang909/loom-ish" rel="noopener">Source code</a> · Support: <a href="mailto:leon@leontang.ca">leon@leontang.ca</a> · Loom-ish is an independent open-source project and is not affiliated with Loom or Atlassian.</p>
   </footer>
 
@@ -833,6 +840,7 @@
 (function(){
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
+  const stage = document.getElementById('stage');
   const placeholder = document.getElementById('placeholder');
   const recordingNote = document.getElementById('recordingNote');
   const bigTimer = document.getElementById('bigTimer');
@@ -846,9 +854,6 @@
   const resPicker = document.getElementById('resPicker');
   const fpsPicker = document.getElementById('fpsPicker');
   const qualityPicker = document.getElementById('qualityPicker');
-  const selfViewToggle = document.getElementById('selfViewToggle');
-  const cornerPicker = document.getElementById('cornerPicker');
-  const shapePicker = document.getElementById('shapePicker');
   const result = document.getElementById('result');
   const playback = document.getElementById('playback');
   const downloadLink = document.getElementById('downloadLink');
@@ -868,8 +873,6 @@
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
 
-  let corner = 'bottom-right';
-  let shape = 'circle';
   let speed = 1;
   let maxDim = 1280;
   let targetFps = 15;
@@ -888,10 +891,11 @@
   let tickWorker = null;
   let pipWin = null;
   let pipTimerEl = null;
+  let shouldCompositeCamera = false;
 
   // --- background-safe tick loop -------------------------------------
   // requestAnimationFrame is fully paused in hidden tabs, which is why
-  // switching tabs used to freeze the screen + webcam capture. A Worker's
+  // switching tabs used to freeze the screen capture. A Worker's
   // own timer keeps firing even when this page isn't visible, so we drive
   // the canvas draw loop from that instead.
   function makeTickWorker(intervalMs){
@@ -900,18 +904,6 @@
     return new Worker(URL.createObjectURL(blob));
   }
 
-  cornerPicker.addEventListener('click', e => {
-    const b = e.target.closest('button');
-    if(!b) return;
-    corner = b.dataset.corner;
-    [...cornerPicker.children].forEach(x => x.classList.toggle('active', x === b));
-  });
-  shapePicker.addEventListener('click', e => {
-    const b = e.target.closest('button');
-    if(!b) return;
-    shape = b.dataset.shape;
-    [...shapePicker.children].forEach(x => x.classList.toggle('active', x === b));
-  });
   speedPicker.addEventListener('click', e => {
     const b = e.target.closest('button');
     if(!b) return;
@@ -957,14 +949,6 @@
     return '';
   }
 
-  function roundRectPath(c, x, y, w, h, r){
-    c.moveTo(x + r, y);
-    c.arcTo(x + w, y, x + w, y + h, r);
-    c.arcTo(x + w, y + h, x, y + h, r);
-    c.arcTo(x, y + h, x, y, r);
-    c.arcTo(x, y, x + w, y, r);
-  }
-
   function scaledSize(w, h, cap){
     if(!cap || Math.max(w, h) <= cap) return { w, h };
     const scale = cap / Math.max(w, h);
@@ -981,13 +965,12 @@
       ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
     }
 
-    if(camToggle.checked && camVideo && camVideo.videoWidth){
+    if(shouldCompositeCamera && camVideo && camVideo.videoWidth){
       const minSide = Math.min(canvas.width, canvas.height);
       const bubbleSize = Math.max(140, Math.round(minSide * 0.22));
       const margin = Math.round(minSide * 0.03);
-      let x, y;
-      if(corner.includes('right')) x = canvas.width - bubbleSize - margin; else x = margin;
-      if(corner.includes('bottom')) y = canvas.height - bubbleSize - margin; else y = margin;
+      const x = canvas.width - bubbleSize - margin;
+      const y = canvas.height - bubbleSize - margin;
 
       const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
       const side = Math.min(vw, vh);
@@ -995,12 +978,7 @@
 
       ctx.save();
       ctx.beginPath();
-      const r = shape === 'circle' ? bubbleSize / 2 : bubbleSize * 0.14;
-      if(shape === 'circle'){
-        ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2, 0, Math.PI*2);
-      } else {
-        roundRectPath(ctx, x, y, bubbleSize, bubbleSize, r);
-      }
+      ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2, 0, Math.PI*2);
       ctx.closePath();
       ctx.clip();
       ctx.translate(x + bubbleSize, y);
@@ -1012,11 +990,7 @@
       ctx.lineWidth = Math.max(2, bubbleSize * 0.02);
       ctx.strokeStyle = 'rgba(255,255,255,0.85)';
       ctx.beginPath();
-      if(shape === 'circle'){
-        ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2 - ctx.lineWidth/2, 0, Math.PI*2);
-      } else {
-        roundRectPath(ctx, x + ctx.lineWidth/2, y + ctx.lineWidth/2, bubbleSize - ctx.lineWidth, bubbleSize - ctx.lineWidth, r);
-      }
+      ctx.arc(x + bubbleSize/2, y + bubbleSize/2, bubbleSize/2 - ctx.lineWidth/2, 0, Math.PI*2);
       ctx.stroke();
       ctx.restore();
     }
@@ -1139,6 +1113,13 @@
       return;
     }
 
+    const screenTrack = screenStream.getVideoTracks()[0];
+    const displaySurface = screenTrack.getSettings ? screenTrack.getSettings().displaySurface : '';
+    // A floating PiP window is already visible in an entire-screen capture.
+    // Only composite the circular camera once for tab/window captures, where
+    // the floating window sits outside the selected recording surface.
+    shouldCompositeCamera = camToggle.checked && displaySurface !== 'monitor';
+
     if(camToggle.checked || micToggle.checked){
       setStatus('Requesting camera / microphone…');
       try{
@@ -1172,6 +1153,7 @@
       canvas.width = initial.w;
       canvas.height = initial.h; }
     canvas.style.display = 'none'; // the live composite is only needed for capture, not for on-page viewing
+    stage.classList.remove('complete');
     placeholder.style.display = 'none';
     recordingNote.classList.add('show');
 
@@ -1232,13 +1214,15 @@
     resPicker.querySelectorAll('button').forEach(b => b.disabled = true);
     fpsPicker.querySelectorAll('button').forEach(b => b.disabled = true);
     qualityPicker.querySelectorAll('button').forEach(b => b.disabled = true);
-    setStatus('Recording — you can switch tabs now, it will keep capturing.');
+    setStatus(shouldCompositeCamera
+      ? 'Recording — one circular webcam bubble will be included in the saved video.'
+      : 'Recording — your floating webcam bubble is captured once, without a duplicate.');
 
-    // the floating bubble shows up by default (unless turned off), no extra click needed
-    if(selfViewToggle.checked){
+    // The camera toggle owns the single floating self-view and its Stop button.
+    if(camToggle.checked){
       await openBubbleWindow();
     } else {
-      pipBtn.disabled = !camVideo;
+      pipBtn.disabled = true;
     }
   }
 
@@ -1294,6 +1278,7 @@
     pipBtn.style.display = 'none';
     resetBtn.style.display = 'inline-flex';
     recordingNote.classList.remove('show');
+    stage.classList.add('complete');
 
     const duration = await getBlobDuration(playback);
     trimStart.min = 0; trimStart.max = duration; trimStart.step = 0.1; trimStart.value = 0;
@@ -1402,8 +1387,9 @@
     trimResult.classList.remove('show');
     progressWrap.classList.remove('show');
     trimStatus.textContent = '';
+    stage.classList.remove('complete');
     canvas.style.display = 'none';
-    placeholder.style.display = 'block';
+    placeholder.style.display = 'flex';
     recordingNote.classList.remove('show');
     bigTimer.textContent = '00:00';
     startBtn.style.display = 'inline-flex';

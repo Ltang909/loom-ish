@@ -14,7 +14,7 @@ Recording and editing happen in your browser. When you finish, you must download
 - No account or installation
 - No video uploads or hosted storage
 - Screen, tab, webcam, and microphone recording
-- Configurable webcam bubble
+- Single circular webcam bubble with a floating stop control
 - 720p, 1080p, and original-resolution options
 - Built-in trimming and playback-speed editing
 - Local MP4 or WebM download, depending on browser support
