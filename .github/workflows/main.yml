@@ -14,23 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Hostinger paths
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.hostinger_host }}
-          username: ${{ secrets.hostinger_username }}
-          password: ${{ secrets.name_password }}
-          port: ${{ secrets.hostinger_port }}
-          script: |
-            echo "CURRENT DIRECTORY:"
-            pwd
-            echo "HOME:"
-            echo $HOME
-            echo "DIRECTORY CONTENTS:"
-            ls -la
-            echo "PUBLIC_HTML:"
-            ls -la ~/public_html 2>/dev/null || true
-
       - name: Deploy Loom-ish
         uses: appleboy/scp-action@v1
         with:
@@ -39,7 +22,7 @@ jobs:
           password: ${{ secrets.name_password }}
           port: ${{ secrets.hostinger_port }}
           source: "."
-          target: "public_html/loom-ish"
+          target: "domains/builtbylt.com/public_html/loom-ish"
           overwrite: true
           rm: false
           exclude: ".git,.github"
