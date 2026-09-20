@@ -1,0 +1,6 @@
+# Loom-ish is a recorder: it needs microphone/camera access.
+# The parent builtbylt.com .htaccess disables them site-wide via
+# Permissions-Policy, so re-allow for this app's own origin.
+<IfModule mod_headers.c>
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
+</IfModule>

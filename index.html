@@ -44,6 +44,7 @@
         "Webcam bubble",
         "Microphone recording",
         "Local video download",
+        "Voice notes with live transcription",
         "Video trimming",
         "Playback speed adjustment",
         "No account required",
@@ -638,6 +639,140 @@
   }
 
   ::selection{ background: var(--accent-dim); }
+  /* --- mode tabs --- */
+  .mode-tabs{
+    display:flex;
+    gap:8px;
+    margin: 2px 0 16px;
+  }
+  .mode-tab{
+    appearance:none;
+    border:1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font: inherit;
+    font-size:14px;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .mode-tab.active{
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg);
+  }
+  .mode-tab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  /* --- voice notes --- */
+  .vn-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .vn-title{ font-size:20px !important; margin:0 0 6px !important; }
+  .vn-sub{ color:var(--muted); font-size:13.5px; line-height:1.55; margin:0; max-width:62ch; }
+  .vn-sub strong{ color:var(--text); }
+  .vn-lang{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--muted); font-weight:600; }
+  .vn-lang select, .vn-field input{
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-raised);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:14px;
+    font-weight:400;
+  }
+  .vn-meter{
+    width:100%;
+    height:56px;
+    display:block;
+    background: var(--panel-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin: 4px 0 14px;
+  }
+  .vn-timer{
+    font-family: var(--mono);
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  .vn-timer.live{ color: var(--record); }
+  .vn-transcript-wrap{ margin-top:14px; }
+  .vn-transcript{
+    min-height:96px;
+    max-height:220px;
+    overflow-y:auto;
+    background: var(--panel-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:14.5px;
+    line-height:1.65;
+    white-space:pre-wrap;
+  }
+  .vn-transcript .interim{ color: var(--muted); }
+  .vn-placeholder{ color: var(--muted); }
+  .vn-settings{ margin-top:18px; border-top:1px solid var(--border); padding-top:4px; }
+  .vn-settings-row{ align-items:flex-end; }
+  .vn-field{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--muted); font-weight:600; flex:1 1 220px; }
+  .vn-list{ display:flex; flex-direction:column; gap:12px; margin-top:10px; }
+  .vn-card{
+    background: var(--panel-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .vn-card-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .vn-card-head strong{ font-size:14px; }
+  .vn-dur{ font-family:var(--mono); font-size:12.5px; color:var(--muted); }
+  .vn-badge{
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:3px 9px;
+    color:var(--muted);
+  }
+  .vn-badge.sent{ color:#4ade80; border-color:#4ade80; }
+  .vn-badge.sending{ color:var(--accent); border-color:var(--accent); }
+  .vn-badge.failed{ color:var(--record); border-color:var(--record); }
+  .vn-card audio{ width:100%; margin-bottom:10px; }
+  .vn-edit{
+    width:100%;
+    font:inherit;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--text);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    resize:vertical;
+  }
+  .vn-card-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .btn-sm{ padding:8px 12px; font-size:13px; }
+  .vn-danger{ color: var(--record) !important; }
+  .vn-empty{ color:var(--muted); font-size:14px; padding:18px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
 </style>
 </head>
 <body>
@@ -661,6 +796,10 @@
     </div>
   </header>
 
+  <div class="mode-tabs" role="tablist" aria-label="Recorder mode">
+    <button class="mode-tab active" id="tabScreen" role="tab" aria-selected="true">Screen recorder</button>
+    <button class="mode-tab" id="tabVoice" role="tab" aria-selected="false">Voice notes</button>
+  </div>
   <div class="stage" id="stage">
     <canvas id="canvas" style="display:none;"></canvas>
     <div class="placeholder" id="placeholder">
@@ -674,7 +813,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="screenPanel">
     <div class="row">
       <label class="toggle"><input type="checkbox" id="camToggle" checked> Floating webcam bubble</label>
       <label class="toggle"><input type="checkbox" id="micToggle" checked> Microphone</label>
@@ -722,6 +861,57 @@
     </div>
   </div>
 
+  <div class="panel" id="voicePanel" hidden>
+    <div class="vn-head">
+      <div>
+        <h2 class="vn-title">Voice notes</h2>
+        <p class="vn-sub">Record a thought, get a live transcript. Notes stay in this browser until you choose <strong>Send to Notion</strong> — nothing is uploaded automatically.</p>
+      </div>
+      <label class="vn-lang">Transcription language
+        <select id="vnLang">
+          <option value="en-US" selected>English (US)</option>
+          <option value="en-GB">English (UK)</option>
+          <option value="es-ES">Espa&ntilde;ol</option>
+          <option value="fr-FR">Fran&ccedil;ais</option>
+          <option value="de-DE">Deutsch</option>
+          <option value="it-IT">Italiano</option>
+          <option value="pt-BR">Portugu&ecirc;s (BR)</option>
+          <option value="zh-CN">&chi;&#20013;&#25991; (&#31616;&#20307;)</option>
+          <option value="zh-TW">&chi;&#20013;&#25991; (&#32321;&#39636;)</option>
+          <option value="yue-Hant-HK">&#31925;&#35486; (&#39321;&#28207;)</option>
+          <option value="ja-JP">&#26085;&#26412;&#35486;</option>
+          <option value="ko-KR">&#54620;&#44397;&#50612;</option>
+        </select>
+      </label>
+    </div>
+
+    <canvas class="vn-meter" id="vnMeter" width="640" height="56" aria-hidden="true"></canvas>
+
+    <div class="row">
+      <button class="btn btn-record" id="vnStart">&#9679; Start voice note</button>
+      <button class="btn btn-stop" id="vnStop" disabled>&#9632; Stop &amp; save</button>
+      <div class="spacer"></div>
+      <span class="vn-timer" id="vnTimer">00:00</span>
+      <span class="status" id="vnStatus">Ready.</span>
+    </div>
+
+    <div class="vn-transcript-wrap">
+      <div class="subhead">Live transcript<span class="hint" id="vnSrHint"></span></div>
+      <div class="vn-transcript" id="vnTranscript" aria-live="polite"><span class="vn-placeholder">Your words appear here while you record&hellip;</span></div>
+    </div>
+
+    <div class="vn-settings">
+      <div class="subhead">Notion relay<span class="hint">optional &mdash; only used when you hit &ldquo;Send to Notion&rdquo;</span></div>
+      <div class="row vn-settings-row">
+        <label class="vn-field">Relay URL<input type="url" id="vnRelayUrl" value="https://builtbylt.com/api/voice-notes.php" spellcheck="false"></label>
+        <label class="vn-field">Access token<input type="password" id="vnToken" placeholder="paste token once" autocomplete="off" spellcheck="false"></label>
+        <button class="btn btn-ghost" id="vnSaveSettings" type="button">Save settings</button>
+      </div>
+    </div>
+
+    <div class="subhead">Your notes<span class="hint" id="vnCount"></span></div>
+    <div class="vn-list" id="vnList"></div>
+  </div>
   <div class="result" id="result">
     <video id="playback" controls></video>
     <div class="result-actions">
@@ -1423,6 +1613,485 @@
     setStatus('Your browser doesn\'t support screen recording (try Chrome, Edge, or Firefox on desktop).', true);
     startBtn.disabled = true;
   }
+})();
+/* --- Voice notes ------------------------------------------------------ */
+(function(){
+  'use strict';
+  const tabScreen = document.getElementById('tabScreen');
+  const tabVoice = document.getElementById('tabVoice');
+  const stage = document.getElementById('stage');
+  const screenPanel = document.getElementById('screenPanel');
+  const result = document.getElementById('result');
+  const voicePanel = document.getElementById('voicePanel');
+  const vnStart = document.getElementById('vnStart');
+  const vnStop = document.getElementById('vnStop');
+  const vnTimer = document.getElementById('vnTimer');
+  const vnStatus = document.getElementById('vnStatus');
+  const vnMeter = document.getElementById('vnMeter');
+  const vnTranscript = document.getElementById('vnTranscript');
+  const vnSrHint = document.getElementById('vnSrHint');
+  const vnLang = document.getElementById('vnLang');
+  const vnRelayUrl = document.getElementById('vnRelayUrl');
+  const vnToken = document.getElementById('vnToken');
+  const vnSaveSettings = document.getElementById('vnSaveSettings');
+  const vnList = document.getElementById('vnList');
+  const vnCount = document.getElementById('vnCount');
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  let vnRecording = false;
+  let micStream = null;
+  let recorder = null;
+  let chunks = [];
+  let audioCtx = null;
+  let analyser = null;
+  let meterRAF = 0;
+  let timerInt = 0;
+  let startTs = 0;
+  let recog = null;
+  let finalTranscript = '';
+  let audioURLs = {};
+  let resultWasShown = false;
+
+  /* --- mode tabs --- */
+  function setMode(mode){
+    const voice = mode === 'voice';
+    tabScreen.classList.toggle('active', !voice);
+    tabVoice.classList.toggle('active', voice);
+    tabScreen.setAttribute('aria-selected', String(!voice));
+    tabVoice.setAttribute('aria-selected', String(voice));
+    if(voice){
+      resultWasShown = result.classList.contains('show');
+      result.classList.remove('show');
+    }else if(resultWasShown){
+      result.classList.add('show');
+    }
+    stage.hidden = voice;
+    screenPanel.hidden = voice;
+    voicePanel.hidden = !voice;
+    try{ localStorage.setItem('loomish_mode', mode); }catch(_){}
+    if(!voice && vnRecording) stopVoiceNote();
+  }
+  tabScreen.addEventListener('click', ()=>setMode('screen'));
+  tabVoice.addEventListener('click', ()=>setMode('voice'));
+
+  /* --- settings --- */
+  const DEFAULT_RELAY = 'https://builtbylt.com/api/voice-notes.php';
+  function loadSettings(){
+    try{
+      return Object.assign({ relayUrl: DEFAULT_RELAY, token: '' },
+        JSON.parse(localStorage.getItem('loomish_vn_settings') || '{}'));
+    }catch(_){ return { relayUrl: DEFAULT_RELAY, token: '' }; }
+  }
+  function applySettings(){
+    const s = loadSettings();
+    vnRelayUrl.value = s.relayUrl || DEFAULT_RELAY;
+    vnToken.value = s.token || '';
+  }
+  vnSaveSettings.addEventListener('click', ()=>{
+    try{
+      localStorage.setItem('loomish_vn_settings', JSON.stringify({
+        relayUrl: vnRelayUrl.value.trim() || DEFAULT_RELAY,
+        token: vnToken.value.trim()
+      }));
+      setVnStatus('Settings saved.');
+    }catch(_){ setVnStatus('Could not save settings in this browser.', true); }
+  });
+
+  /* --- IndexedDB --- */
+  const DB_NAME = 'loomish-voicenotes';
+  function dbOpen(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore('notes', { keyPath: 'id' }); };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+  function dbPut(note){
+    return dbOpen().then((db)=>new Promise((resolve, reject)=>{
+      const tx = db.transaction('notes', 'readwrite');
+      tx.objectStore('notes').put(note);
+      tx.oncomplete = ()=>{ db.close(); resolve(); };
+      tx.onerror = ()=>{ db.close(); reject(tx.error); };
+    }));
+  }
+  function dbDel(id){
+    return dbOpen().then((db)=>new Promise((resolve, reject)=>{
+      const tx = db.transaction('notes', 'readwrite');
+      tx.objectStore('notes').delete(id);
+      tx.oncomplete = ()=>{ db.close(); resolve(); };
+      tx.onerror = ()=>{ db.close(); reject(tx.error); };
+    }));
+  }
+  function dbGet(id){
+    return dbOpen().then((db)=>new Promise((resolve, reject)=>{
+      const tx = db.transaction('notes', 'readonly');
+      const req = tx.objectStore('notes').get(id);
+      req.onsuccess = ()=>{ db.close(); resolve(req.result); };
+      req.onerror = ()=>{ db.close(); reject(req.error); };
+    }));
+  }
+  function dbAll(){
+    return dbOpen().then((db)=>new Promise((resolve, reject)=>{
+      const tx = db.transaction('notes', 'readonly');
+      const req = tx.objectStore('notes').getAll();
+      req.onsuccess = ()=>{ db.close(); resolve(req.result || []); };
+      req.onerror = ()=>{ db.close(); reject(req.error); };
+    }));
+  }
+
+  /* --- helpers --- */
+  function setVnStatus(msg, isError){
+    vnStatus.textContent = msg;
+    vnStatus.classList.toggle('error', !!isError);
+  }
+  function fmtTime(sec){
+    sec = Math.max(0, Math.floor(sec));
+    return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+  }
+  function fmtDate(iso){
+    try{
+      return new Date(iso).toLocaleString([], { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+    }catch(_){ return iso; }
+  }
+  function pickAudioMime(){
+    const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    for(const t of c){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t; }
+    return '';
+  }
+  function noteTitle(note){
+    const words = (note.transcript || '').split(/\s+/).filter(Boolean).slice(0, 8).join(' ');
+    return words || ('Voice note \u2014 ' + fmtDate(note.createdAt));
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  /* --- level meter --- */
+  function drawMeter(){
+    const g = vnMeter.getContext('2d');
+    const W = vnMeter.width, H = vnMeter.height;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#e8a33d').trim();
+    (function frame(){
+      if(!vnRecording) return;
+      meterRAF = requestAnimationFrame(frame);
+      analyser.getByteFrequencyData(data);
+      g.clearRect(0, 0, W, H);
+      const bars = 48, bw = W / bars;
+      for(let i=0; i<bars; i++){
+        const v = data[Math.floor(i * data.length / bars)] / 255;
+        const h = Math.max(3, v * H);
+        g.fillStyle = accent;
+        g.globalAlpha = 0.3 + v * 0.7;
+        g.fillRect(i * bw + bw * 0.2, (H - h) / 2, bw * 0.6, h);
+      }
+      g.globalAlpha = 1;
+    })();
+  }
+
+  /* --- speech recognition --- */
+  function startRecognition(){
+    if(!SR){
+      vnSrHint.textContent = 'Live transcription needs Chrome or Edge.';
+      return;
+    }
+    vnSrHint.textContent = 'Live \u00b7 ' + vnLang.options[vnLang.selectedIndex].text;
+    const r = new SR();
+    r.lang = vnLang.value;
+    r.continuous = true;
+    r.interimResults = true;
+    r.onresult = (e)=>{
+      let interim = '';
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        const res = e.results[i];
+        const txt = res[0].transcript;
+        if(res.isFinal){
+          finalTranscript += (finalTranscript && !/\s$/.test(finalTranscript) ? ' ' : '') + txt.trim() + ' ';
+        }else{
+          interim += txt;
+        }
+      }
+      renderLiveTranscript(interim);
+    };
+    r.onerror = (e)=>{
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+        vnSrHint.textContent = 'Transcription blocked \u2014 check the microphone permission.';
+      }
+    };
+    // SpeechRecognition pauses after silence; restart while recording.
+    r.onend = ()=>{ if(vnRecording){ try{ r.start(); }catch(_){} } };
+    recog = r;
+    try{ r.start(); }catch(_){}
+  }
+  function renderLiveTranscript(interim){
+    vnTranscript.innerHTML = '';
+    const done = finalTranscript.trim();
+    if(done) vnTranscript.appendChild(document.createTextNode(done));
+    if(interim){
+      if(done) vnTranscript.appendChild(document.createTextNode(' '));
+      const s = document.createElement('span');
+      s.className = 'interim';
+      s.textContent = interim;
+      vnTranscript.appendChild(s);
+    }
+    if(!done && !interim){
+      vnTranscript.innerHTML = '<span class="vn-placeholder">Listening&hellip;</span>';
+    }
+    vnTranscript.scrollTop = vnTranscript.scrollHeight;
+  }
+
+  /* --- recording --- */
+  async function startVoiceNote(){
+    if(vnRecording) return;
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      setVnStatus('This browser cannot access the microphone.', true);
+      return;
+    }
+    try{
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch(err){
+      setVnStatus('Microphone permission denied.', true);
+      return;
+    }
+    try{
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      audioCtx.createMediaStreamSource(micStream).connect(analyser);
+    }catch(_){ analyser = null; }
+    chunks = [];
+    const mime = pickAudioMime();
+    try{
+      recorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : undefined);
+    }catch(err){
+      cleanupAudio();
+      setVnStatus('Recording is not supported in this browser.', true);
+      return;
+    }
+    recorder.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstop = onVoiceStop;
+    finalTranscript = '';
+    vnTranscript.innerHTML = '<span class="vn-placeholder">Listening&hellip;</span>';
+    startRecognition();
+    vnRecording = true;
+    startTs = Date.now();
+    recorder.start(250);
+    if(analyser) drawMeter();
+    timerInt = setInterval(()=>{ vnTimer.textContent = fmtTime((Date.now() - startTs) / 1000); }, 500);
+    vnTimer.textContent = '00:00';
+    vnTimer.classList.add('live');
+    vnStart.disabled = true;
+    vnStop.disabled = false;
+    vnLang.disabled = true;
+    setVnStatus(SR ? 'Recording \u2014 speak now.' : 'Recording (transcription unavailable in this browser).');
+  }
+  function stopVoiceNote(){
+    if(!vnRecording) return;
+    vnRecording = false;
+    clearInterval(timerInt);
+    cancelAnimationFrame(meterRAF);
+    vnTimer.classList.remove('live');
+    if(recog){ try{ recog.onend = null; recog.stop(); }catch(_){} recog = null; }
+    try{ recorder.stop(); }catch(_){ onVoiceStop(); }
+    vnStart.disabled = false;
+    vnStop.disabled = true;
+    vnLang.disabled = false;
+    setVnStatus('Saving\u2026');
+  }
+  function cleanupAudio(){
+    if(micStream){ micStream.getTracks().forEach((t)=>t.stop()); micStream = null; }
+    if(audioCtx){ audioCtx.close().catch(()=>{}); audioCtx = null; analyser = null; }
+  }
+  function onVoiceStop(){
+    const type = (recorder && recorder.mimeType) || 'audio/webm';
+    const blob = new Blob(chunks, { type: type });
+    const note = {
+      id: 'vn_' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
+      createdAt: new Date().toISOString(),
+      durationSec: Math.round((Date.now() - startTs) / 1000),
+      lang: vnLang.value,
+      transcript: finalTranscript.trim(),
+      audio: blob,
+      mimeType: type,
+      notionStatus: 'local',
+      notionError: ''
+    };
+    cleanupAudio();
+    dbPut(note).then(()=>{
+      setVnStatus('Saved.');
+      renderLibrary();
+    }).catch(()=>{
+      setVnStatus('Could not save the note in this browser.', true);
+    });
+  }
+
+  /* --- library --- */
+  function badgeFor(note){
+    if(note.notionStatus === 'sent') return '<span class="vn-badge sent">In Notion</span>';
+    if(note.notionStatus === 'sending') return '<span class="vn-badge sending">Sending\u2026</span>';
+    if(note.notionStatus === 'failed') return '<span class="vn-badge failed">Send failed</span>';
+    return '<span class="vn-badge">Local</span>';
+  }
+  function paintBadge(card, note){
+    const old = card.querySelector('.vn-badge');
+    if(!old) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = badgeFor(note);
+    old.replaceWith(tmp.firstChild);
+  }
+  async function renderLibrary(){
+    let notes = [];
+    try{ notes = await dbAll(); }
+    catch(_){
+      vnList.innerHTML = '<div class="vn-empty">Voice notes need IndexedDB, which is unavailable in this browser.</div>';
+      return;
+    }
+    notes.sort((a, b)=>String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    Object.values(audioURLs).forEach((u)=>URL.revokeObjectURL(u));
+    audioURLs = {};
+    vnCount.textContent = notes.length ? ('\u00b7 ' + notes.length) : '';
+    if(!notes.length){
+      vnList.innerHTML = '<div class="vn-empty">No voice notes yet. Hit \u201cStart voice note\u201d and talk.</div>';
+      return;
+    }
+    vnList.innerHTML = '';
+    for(const note of notes){
+      const url = URL.createObjectURL(note.audio);
+      audioURLs[note.id] = url;
+      const card = document.createElement('article');
+      card.className = 'vn-card';
+      card.dataset.id = note.id;
+      card.innerHTML =
+        '<div class="vn-card-head"><strong>' + esc(noteTitle(note)) + '</strong>' +
+        '<span class="vn-dur">' + esc(fmtTime(note.durationSec)) + ' \u00b7 ' + esc(fmtDate(note.createdAt)) + '</span>' +
+        badgeFor(note) + '</div>' +
+        '<audio controls preload="metadata" src="' + url + '"></audio>' +
+        '<textarea class="vn-edit" rows="3" placeholder="Transcript is empty \u2014 type or dictate here.">' + esc(note.transcript || '') + '</textarea>' +
+        '<div class="vn-card-actions">' +
+        '<button class="btn btn-accent btn-sm" data-act="send" type="button">Send to Notion</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="copy" type="button">Copy transcript</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="dl-audio" type="button">Download audio</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="dl-txt" type="button">Download .txt</button>' +
+        '<button class="btn btn-ghost btn-sm vn-danger" data-act="del" type="button">Delete</button>' +
+        '<span class="status" data-status></span>' +
+        '</div>';
+      vnList.appendChild(card);
+    }
+  }
+
+  let saveT = 0;
+  vnList.addEventListener('input', (e)=>{
+    const ta = e.target.closest('.vn-edit');
+    if(!ta) return;
+    const card = ta.closest('.vn-card');
+    clearTimeout(saveT);
+    saveT = setTimeout(async ()=>{
+      const note = await dbGet(card.dataset.id);
+      if(note){
+        note.transcript = ta.value;
+        const titleEl = card.querySelector('.vn-card-head strong');
+        if(titleEl) titleEl.textContent = noteTitle(note);
+        await dbPut(note);
+      }
+    }, 600);
+  });
+
+  vnList.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    const card = btn.closest('.vn-card');
+    const id = card.dataset.id;
+    const statusEl = card.querySelector('[data-status]');
+    const say = (m, err)=>{ statusEl.textContent = m; statusEl.classList.toggle('error', !!err); };
+    let note;
+    try{ note = await dbGet(id); }catch(_){ say('Could not read the note.', true); return; }
+    if(!note) return;
+    const act = btn.dataset.act;
+    if(act === 'del'){
+      if(!confirm('Delete this voice note? The audio and transcript will be gone.')) return;
+      await dbDel(id);
+      renderLibrary();
+      return;
+    }
+    if(act === 'copy'){
+      try{ await navigator.clipboard.writeText(note.transcript || ''); say('Copied.'); }
+      catch(_){ say('Copy failed in this browser.', true); }
+      return;
+    }
+    if(act === 'dl-audio'){
+      const a = document.createElement('a');
+      a.href = audioURLs[id];
+      a.download = 'voice-note-' + id + '.' + (note.mimeType.indexOf('mp4') !== -1 ? 'm4a' : 'webm');
+      document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
+    if(act === 'dl-txt'){
+      const blob = new Blob([noteTitle(note) + '\n' + fmtDate(note.createdAt) + '\n\n' + (note.transcript || '')], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'voice-note-' + id + '.txt';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      return;
+    }
+    if(act === 'send'){
+      sendToNotion(note, card, say);
+    }
+  });
+
+  async function sendToNotion(note, card, say){
+    const s = loadSettings();
+    if(!s.token){
+      setVnStatus('Add your relay access token under \u201cNotion relay\u201d first.', true);
+      vnRelayUrl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      vnToken.focus();
+      return;
+    }
+    note.notionStatus = 'sending';
+    note.notionError = '';
+    await dbPut(note);
+    paintBadge(card, note);
+    say('Sending\u2026');
+    try{
+      const res = await fetch(s.relayUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
+        body: JSON.stringify({
+          title: noteTitle(note).slice(0, 140),
+          transcript: note.transcript || '',
+          duration_sec: note.durationSec,
+          recorded_at: note.createdAt,
+          lang: note.lang
+        })
+      });
+      if(!res.ok){
+        let msg = 'HTTP ' + res.status;
+        try{ const j = await res.json(); if(j && j.error) msg = j.error; }catch(_){}
+        throw new Error(msg);
+      }
+      note.notionStatus = 'sent';
+      say('Sent to Notion.');
+    }catch(err){
+      note.notionStatus = 'failed';
+      note.notionError = String((err && err.message) || err);
+      say('Send failed: ' + note.notionError, true);
+    }
+    await dbPut(note);
+    paintBadge(card, note);
+  }
+
+  vnStart.addEventListener('click', ()=>{
+    startVoiceNote().catch((e)=>{ console.error(e); setVnStatus('Could not start recording.', true); });
+  });
+  vnStop.addEventListener('click', stopVoiceNote);
+  window.addEventListener('pagehide', ()=>{ if(vnRecording) stopVoiceNote(); });
+
+  /* --- init --- */
+  applySettings();
+  try{ if(localStorage.getItem('loomish_mode') === 'voice') setMode('voice'); }catch(_){}
+  renderLibrary();
 })();
 </script>
 </body>

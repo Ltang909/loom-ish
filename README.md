@@ -31,6 +31,14 @@ Loom-ish uses browser screen-share, camera, and microphone APIs directly. The re
 
 Because there is no hosted video storage, closing or refreshing the page before downloading can permanently lose the recording.
 
+## Voice notes
+
+The **Voice notes** tab records audio-only notes with a live transcript, powered by the browser's built-in speech recognition (free, no API key). It works best in Chrome or Edge; other browsers can still record audio without the live transcript.
+
+- Notes are stored in the browser (IndexedDB) and never uploaded automatically.
+- Each note keeps its audio, an editable transcript, and download options (audio / .txt).
+- **Send to Notion** posts the transcript to a relay endpoint (`api/voice-notes.php` on builtbylt.com), which queues it for syncing into Notion. The relay needs a bearer token, entered once under *Notion relay* settings. On the server, only the token's hash is stored in `private/builtbylt.php` as `voice_notes_token_hash` (generate with `php -r "echo password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), PHP_EOL;"` and keep the raw token private).
+
 ## Run locally
 
 Clone the repository and serve its root directory with any static web server:
