@@ -1688,15 +1688,30 @@
     vnRelayUrl.value = s.relayUrl || DEFAULT_RELAY;
     vnToken.value = s.token || '';
   }
-  vnSaveSettings.addEventListener('click', ()=>{
+  function persistSettings(showMsg){
     try{
       localStorage.setItem('loomish_vn_settings', JSON.stringify({
         relayUrl: vnRelayUrl.value.trim() || DEFAULT_RELAY,
         token: vnToken.value.trim()
       }));
-      setVnStatus('Settings saved.');
-    }catch(_){ setVnStatus('Could not save settings in this browser.', true); }
+      if(showMsg !== false) setVnStatus('Settings saved.');
+      return true;
+    }catch(_){ setVnStatus('Could not save settings in this browser.', true); return false; }
+  }
+  vnSaveSettings.addEventListener('click', ()=>{
+    if(persistSettings()){
+      const orig = vnSaveSettings.textContent;
+      vnSaveSettings.textContent = 'Saved \u2713';
+      vnSaveSettings.disabled = true;
+      setTimeout(()=>{ vnSaveSettings.textContent = orig; vnSaveSettings.disabled = false; }, 1500);
+    }
   });
+  // Auto-save settings as they type, so the button is never a blocker.
+  let vnSaveT = 0;
+  [vnRelayUrl, vnToken].forEach(el=>el.addEventListener('input', ()=>{
+    clearTimeout(vnSaveT);
+    vnSaveT = setTimeout(()=>persistSettings(false), 600);
+  }));
 
   /* --- IndexedDB --- */
   const DB_NAME = 'loomish-voicenotes';
