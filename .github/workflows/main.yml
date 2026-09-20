@@ -14,6 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # appleboy/scp-action v1 has no exclude input; strip VCS metadata so
+      # stale .git objects on the server can never break the untar step.
+      - name: Strip VCS metadata
+        run: rm -rf .git .github
+
       - name: Deploy Loom-ish
         uses: appleboy/scp-action@v1
         with:
@@ -25,4 +30,3 @@ jobs:
           target: "domains/builtbylt.com/public_html/loom-ish"
           overwrite: true
           rm: false
-          exclude: ".git,.github"
