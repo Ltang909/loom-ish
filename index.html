@@ -1919,7 +1919,73 @@
     if(micStream){ micStream.getTracks().forEach((t)=>t.stop()); micStream = null; }
     if(audioCtx){ audioCtx.close().catch(()=>{}); audioCtx = null; analyser = null; }
   }
-  function onVoiceStop(){
+  /* --- on-device transcription fallback (iPhone Safari has no SpeechRecognition) ---
+     Only runs when live transcription is unavailable, so the desktop
+     Chrome/Edge path is completely untouched. */
+  let whisperPipe = null;
+  let whisperLoading = null;
+  const WHISPER_LANG = { en:'english', es:'spanish', fr:'french', de:'german', it:'italian', pt:'portuguese', zh:'chinese', yue:'cantonese', ja:'japanese', ko:'korean' };
+
+  async function blobToPcm16k(blob){
+    const buf = await blob.arrayBuffer();
+    const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const ctx = new AC(1, 1, 44100);
+    const audio = await ctx.decodeAudioData(buf);
+    const ch = audio.getChannelData(0);
+    const fromRate = audio.sampleRate, toRate = 16000;
+    if(fromRate === toRate) return ch;
+    const outLen = Math.max(1, Math.floor(ch.length * toRate / fromRate));
+    const out = new Float32Array(outLen);
+    for(let i=0;i<outLen;i++){
+      const pos = i * fromRate / toRate;
+      const i0 = Math.floor(pos);
+      const i1 = Math.min(i0+1, ch.length-1);
+      const frac = pos - i0;
+      out[i] = ch[i0]*(1-frac) + ch[i1]*frac;
+    }
+    return out;
+  }
+
+  async function getWhisperPipe(){
+    if(whisperPipe) return whisperPipe;
+    if(!whisperLoading){
+      whisperLoading = (async ()=>{
+        setVnStatus('Downloading transcription model (one-time)…');
+        const mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2');
+        mod.env.allowLocalModels = false;
+        const pipe = await mod.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
+          progress_callback: (p)=>{
+            if(p && p.status === 'progress' && typeof p.progress === 'number'){
+              setVnStatus('Downloading transcription model (one-time)… ' + Math.round(p.progress*100) + '%');
+            }
+          }
+        });
+        whisperPipe = pipe;
+        return pipe;
+      })().catch((err)=>{ whisperLoading = null; throw err; });
+    }
+    return whisperLoading;
+  }
+
+  async function transcribeOnDevice(blob, langValue){
+    const pcm = await blobToPcm16k(blob);
+    if(pcm.length < 8000) return ''; // less than ~0.5s of audio, nothing to transcribe
+    const code = String(langValue || 'en-US').split('-')[0].toLowerCase();
+    const pipe = await getWhisperPipe();
+    setVnStatus('Transcribing on this device…');
+    const out = await pipe(pcm, {
+      language: WHISPER_LANG[code] || undefined,
+      task: 'transcribe',
+      chunk_length_s: 30,
+      stride_length_s: 5
+    });
+    let text = '';
+    if(out && typeof out.text === 'string') text = out.text.trim();
+    else if(Array.isArray(out)) text = out.map((o)=>o.text || '').join(' ').trim();
+    return text.replace(/^\s*\[.*?\]\s*/, '').trim();
+  }
+
+  async function onVoiceStop(){
     const type = (recorder && recorder.mimeType) || 'audio/webm';
     const blob = new Blob(chunks, { type: type });
     const note = {
@@ -1934,8 +2000,22 @@
       notionError: ''
     };
     cleanupAudio();
+    // Fallback: no live speech recognition in this browser (e.g. iPhone Safari),
+    // so transcribe the recording on-device. Desktop Chrome/Edge never reach here.
+    if(!note.transcript && !SR && blob.size > 0){
+      try{
+        note.transcript = await transcribeOnDevice(blob, note.lang);
+      }catch(err){
+        console.error('on-device transcription failed', err);
+        setVnStatus('Transcription unavailable — audio saved without words.', true);
+      }
+    }
     dbPut(note).then(()=>{
       setVnStatus('Saved.');
+      if(note.transcript){
+        vnTranscript.innerHTML = '';
+        vnTranscript.appendChild(document.createTextNode(note.transcript));
+      }
       renderLibrary();
     }).catch(()=>{
       setVnStatus('Could not save the note in this browser.', true);
