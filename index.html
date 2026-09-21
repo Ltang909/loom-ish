@@ -865,7 +865,7 @@
     <div class="vn-head">
       <div>
         <h2 class="vn-title">Voice notes</h2>
-        <p class="vn-sub">Record a thought, get a live transcript. Notes stay in this browser until you choose <strong>Send to Notion</strong> — nothing is uploaded automatically.</p>
+        <p class="vn-sub">Record a thought, get a live transcript. Notes stay in this browser until you choose <strong>Send to Notion</strong>. On browsers without live transcription (like iPhone Safari), the audio is sent to your relay for transcription when you stop recording — nothing else is uploaded automatically.</p>
       </div>
       <label class="vn-lang">Transcription language
         <select id="vnLang">
@@ -1900,7 +1900,7 @@
     vnStart.disabled = true;
     vnStop.disabled = false;
     vnLang.disabled = true;
-    setVnStatus(SR ? 'Recording \u2014 speak now.' : 'Recording (transcription unavailable in this browser).');
+    setVnStatus(SR ? 'Recording \u2014 speak now.' : 'Recording. Your words will be transcribed when you stop.');
   }
   function stopVoiceNote(){
     if(!vnRecording) return;
@@ -1985,6 +1985,40 @@
     return text.replace(/^\s*\[.*?\]\s*/, '').trim();
   }
 
+  /* --- server transcription fallback (Groq Whisper, free tier) ---
+     iPhone Safari has no SpeechRecognition, and on-device Whisper is
+     unreliable on iOS, so the audio is sent to the builtbylt.com relay,
+     which transcribes it server-side and returns the text. The Groq API
+     key never leaves the server. */
+  function extForBlob(blob){
+    const t = String((blob && blob.type) || '').toLowerCase();
+    if(t.indexOf('webm') !== -1) return 'webm';
+    if(t.indexOf('ogg') !== -1) return 'ogg';
+    if(t.indexOf('wav') !== -1) return 'wav';
+    if(t.indexOf('mpeg') !== -1) return 'mp3';
+    return 'm4a'; // iPhone Safari records audio/mp4
+  }
+
+  async function transcribeViaRelay(blob, langValue){
+    const s = loadSettings();
+    if(!s.token) throw new Error('Voice notes relay is not set up in Settings.');
+    const base = String(s.relayUrl || DEFAULT_RELAY).replace(/voice-notes\.php.*$/, '');
+    const url = base + 'voice-transcribe.php';
+    setVnStatus('Transcribing…');
+    const fd = new FormData();
+    fd.append('audio', blob, 'note.' + extForBlob(blob));
+    fd.append('language', String(langValue || 'en-US'));
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + s.token },
+      body: fd
+    });
+    let data = {};
+    try{ data = await res.json(); }catch(_){}
+    if(!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+    return (data && typeof data.transcript === 'string') ? data.transcript.trim() : '';
+  }
+
   async function onVoiceStop(){
     const type = (recorder && recorder.mimeType) || 'audio/webm';
     const blob = new Blob(chunks, { type: type });
@@ -2000,18 +2034,34 @@
       notionError: ''
     };
     cleanupAudio();
-    // Fallback: no live speech recognition in this browser (e.g. iPhone Safari),
-    // so transcribe the recording on-device. Desktop Chrome/Edge never reach here.
+    // Fallback: no live speech recognition in this browser (e.g. iPhone Safari).
+    // Try the server transcription first (fast, reliable); fall back to the
+    // on-device model only if the server path fails. Desktop Chrome/Edge
+    // never reach here. The real error is kept on the note and shown in the
+    // status line instead of being silently swallowed.
     if(!note.transcript && !SR && blob.size > 0){
+      let errMsg = '';
       try{
-        note.transcript = await transcribeOnDevice(blob, note.lang);
-      }catch(err){
-        console.error('on-device transcription failed', err);
-        setVnStatus('Transcription unavailable — audio saved without words.', true);
+        note.transcript = await transcribeViaRelay(blob, note.lang);
+      }catch(err1){
+        errMsg = String((err1 && err1.message) || err1);
+        console.error('server transcription failed', err1);
+        try{
+          note.transcript = await transcribeOnDevice(blob, note.lang);
+          errMsg = '';
+        }catch(err2){
+          console.error('on-device transcription failed', err2);
+          errMsg = String((err2 && err2.message) || err2);
+        }
       }
+      note.transcribeError = errMsg;
     }
     dbPut(note).then(()=>{
-      setVnStatus('Saved.');
+      if(note.transcribeError && !note.transcript){
+        setVnStatus('Transcription failed: ' + note.transcribeError, true);
+      }else{
+        setVnStatus('Saved.');
+      }
       if(note.transcript){
         vnTranscript.innerHTML = '';
         vnTranscript.appendChild(document.createTextNode(note.transcript));
