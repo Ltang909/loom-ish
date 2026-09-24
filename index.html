@@ -1650,6 +1650,7 @@
   let startTs = 0;
   let recog = null;
   let finalTranscript = '';
+  let srBlocked = false;
   let audioURLs = {};
   let resultWasShown = false;
 
@@ -1832,6 +1833,7 @@
     };
     r.onerror = (e)=>{
       if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+        srBlocked = true;
         vnSrHint.textContent = 'Transcription blocked \u2014 check the microphone permission.';
       }
     };
@@ -1888,6 +1890,7 @@
     recorder.ondataavailable = (e)=>{ if(e.data && e.data.size) chunks.push(e.data); };
     recorder.onstop = onVoiceStop;
     finalTranscript = '';
+    srBlocked = false;
     vnTranscript.innerHTML = '<span class="vn-placeholder">Listening&hellip;</span>';
     startRecognition();
     vnRecording = true;
@@ -2039,7 +2042,7 @@
     // on-device model only if the server path fails. Desktop Chrome/Edge
     // never reach here. The real error is kept on the note and shown in the
     // status line instead of being silently swallowed.
-    if(!note.transcript && !SR && blob.size > 0){
+    if(!note.transcript && (!SR || srBlocked) && blob.size > 0){
       let errMsg = '';
       try{
         note.transcript = await transcribeViaRelay(blob, note.lang);
