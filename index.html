@@ -676,6 +676,23 @@
   .vn-title{ font-size:20px !important; margin:0 0 6px !important; }
   .vn-sub{ color:var(--muted); font-size:13.5px; line-height:1.55; margin:0; max-width:62ch; }
   .vn-sub strong{ color:var(--text); }
+  .vn-prompts{ margin:2px 0 14px; }
+  .vn-prompts .subhead{ margin-bottom:8px; }
+  .vn-prompt-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .vn-prompt{
+    font:inherit; font-size:13px; font-weight:600;
+    color:var(--text); background:var(--panel-raised);
+    border:1px solid var(--border); border-radius:999px;
+    padding:8px 14px; cursor:pointer;
+  }
+  .vn-prompt.active{ background:var(--accent, #195cff); border-color:var(--accent, #195cff); color:#fff; }
+  .vn-prompt-note{ font-size:12px; color:var(--muted); margin-top:8px; }
+  .vn-prompt-note strong{ color:var(--text); }
+  .vn-pbadge{
+    display:inline-block; font-size:11px; font-weight:700;
+    background:var(--panel-raised); border:1px solid var(--border);
+    border-radius:999px; padding:2px 9px; margin-left:8px; vertical-align:middle;
+  }
   .vn-lang{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--muted); font-weight:600; }
   .vn-lang select, .vn-field input{
     font: inherit;
@@ -886,6 +903,12 @@
     </div>
 
     <canvas class="vn-meter" id="vnMeter" width="640" height="56" aria-hidden="true"></canvas>
+
+    <div class="vn-prompts">
+      <div class="subhead">Tonight's reflection<span class="hint">tap one, then hit record</span></div>
+      <div class="vn-prompt-row" id="vnPromptRow"></div>
+      <div class="vn-prompt-note" id="vnPromptNote">No prompt selected — recording a free-form note.</div>
+    </div>
 
     <div class="row">
       <button class="btn btn-record" id="vnStart">&#9679; Start voice note</button>
@@ -1636,6 +1659,36 @@
   const vnSaveSettings = document.getElementById('vnSaveSettings');
   const vnList = document.getElementById('vnList');
   const vnCount = document.getElementById('vnCount');
+  const vnPromptRow = document.getElementById('vnPromptRow');
+  const vnPromptNote = document.getElementById('vnPromptNote');
+
+  /* --- reflection prompts --- */
+  const VN_PROMPTS = [
+    'What did you get done today?',
+    'What could you have done better?',
+    'What went well?',
+    'What are you grateful for?',
+    "What's the one thing for tomorrow?"
+  ];
+  let vnActivePrompt = '';
+  function renderPrompts(){
+    vnPromptRow.innerHTML = '';
+    VN_PROMPTS.forEach((p)=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vn-prompt' + (vnActivePrompt === p ? ' active' : '');
+      b.textContent = p;
+      b.addEventListener('click', ()=>{
+        vnActivePrompt = (vnActivePrompt === p) ? '' : p;
+        renderPrompts();
+      });
+      vnPromptRow.appendChild(b);
+    });
+    vnPromptNote.innerHTML = vnActivePrompt
+      ? 'Answering: <strong>' + esc(vnActivePrompt) + '</strong> — tap again to clear.'
+      : 'No prompt selected — recording a free-form note.';
+  }
+  renderPrompts();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -1778,7 +1831,8 @@
   }
   function noteTitle(note){
     const words = (note.transcript || '').split(/\s+/).filter(Boolean).slice(0, 8).join(' ');
-    return words || ('Voice note \u2014 ' + fmtDate(note.createdAt));
+    const base = words || ('Voice note \u2014 ' + fmtDate(note.createdAt));
+    return note.prompt ? (note.prompt + ' — ' + base) : base;
   }
   function esc(s){
     return String(s).replace(/[&<>"']/g, (c)=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -2030,6 +2084,7 @@
       createdAt: new Date().toISOString(),
       durationSec: Math.round((Date.now() - startTs) / 1000),
       lang: vnLang.value,
+      prompt: vnActivePrompt || '',
       transcript: finalTranscript.trim(),
       audio: blob,
       mimeType: type,
@@ -2113,6 +2168,7 @@
       card.dataset.id = note.id;
       card.innerHTML =
         '<div class="vn-card-head"><strong>' + esc(noteTitle(note)) + '</strong>' +
+        (note.prompt ? '<span class="vn-pbadge">' + esc(note.prompt) + '</span>' : '') +
         '<span class="vn-dur">' + esc(fmtTime(note.durationSec)) + ' \u00b7 ' + esc(fmtDate(note.createdAt)) + '</span>' +
         badgeFor(note) + '</div>' +
         '<audio controls preload="metadata" src="' + url + '"></audio>' +
@@ -2209,6 +2265,7 @@
         body: JSON.stringify({
           title: noteTitle(note).slice(0, 140),
           transcript: note.transcript || '',
+          prompt: note.prompt || '',
           duration_sec: note.durationSec,
           recorded_at: note.createdAt,
           lang: note.lang
